@@ -1,5 +1,5 @@
-# LFA-MEL-parser
-Implementação de um parser descendente recursivo para uma Linguagem Livre de Contexto, chamada de MEL.
+# LFA-MEL-parser com Lark lib
+Implementação de um parser descendente recursivo para uma Linguagem Livre de Contexto, chamada de MEL utilizando a ferramenta voltada para o parse de qualquer gramática livre de contexto chamada **Lark**.
 
 ### Informações gerais
 - **Autor**: Harã Heique dos Santos
@@ -9,7 +9,13 @@ Implementação de um parser descendente recursivo para uma Linguagem Livre de C
 ### Descrição geral do código fonte
 O código fonte está estruturado da seguinte maneira:
 
-![Code structure](https://raw.githubusercontent.com/HaraHeique/LFA-MEL-parser/master/images/Estrutura%20do%20src.png)
+```
+source
+  |_ models
+    |_ LarkParserMEL.py
+  |_ build.py
+  |_ trab2.sh
+```
 
 ##### ParserMEL.py
 É um módulo que contém uma classe única chamada `ParserMEL`, o qual representa o parser em si que é responsável por manipular as expressões matemáticas e encontrar o seu resultado.
