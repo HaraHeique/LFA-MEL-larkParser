@@ -109,7 +109,7 @@ if __name__ == '__main__' :
 ```
 
 ### Como executar?
-Para buildar/executar o app no ambiente Linux basta abrir o CLI(Command Line Interface) no diretório __/source__ e digitar o seguinte comando:
+Para buildar/executar o app no ambiente Linux basta abrir o CLI (Command Line Interface) no diretório __/source__ e digitar o seguinte comando:
     
     sh trab2.sh
 
