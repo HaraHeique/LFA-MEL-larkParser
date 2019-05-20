@@ -1,76 +1,106 @@
-# LFA-MEL-parser
-Implementação de um parser descendente recursivo para uma Linguagem Livre de Contexto, chamada de MEL.
+# LFA-MEL-parser com a biblioteca Lark
+Implementação de um parser descendente recursivo para uma Linguagem Livre de Contexto, chamada de MEL utilizando a ferramenta voltada para o parse de qualquer gramática livre de contexto chamada [**Lark**](https://lark-parser.readthedocs.io/en/latest/).
 
 ### Informações gerais
 - **Autor**: Harã Heique dos Santos
 - **Linguagem de programação**: Python (versão 3.6.7)
+- **Ferramentas de suporte**: Lark Library (versão 0.7.1)
 - **Ambiente de desenvolvimento**: Visual Studio Code (versão 1.33.1)
+
+### Lark
+Lark é uma biblioteca do python capaz realizar o parse de qualquer linguagem livre de contexto, sendo ela de fácil entendimento podendo ser utilizada desde iniciantes até experts do assunto. Dentre suas features estão:
+- Linguagem de gramática avançada, baseado em ***EBNF***;
+- Criação automática da árvore, inferida pela gramática fornecida;
+- Realiza o handle de ambiguidades no parse da gramática;
+- Roda em qualquer interpretador python, dado que ela é feita puramente em python;
+
+Além dessas features existem muitas outras, porém o importante a ressaltar é que o intuito é poupar tempo e ser mais fácil na construção de parsers. Os principais links sobre ela estão logo abaixo:
+- [Documentação](https://lark-parser.readthedocs.io/en/latest/)
+- [Github](https://github.com/lark-parser/lark)
+
+### Gramática
+As regras de produção da gramática da linguagem livre de contexto(MEL) é definida da seguinte maneira:
+
+```html
+<expr>   ::= <term> ((‘+’ | ‘-’) <term>)*
+<term>   ::= <factor> ((‘*’ | ‘/’ | ‘//’ | ‘%’) <factor>)*
+<factor> ::= <base> (‘^’ <factor>)?
+<base>   ::= (‘+’ | ‘-’) <base>
+           | <number>
+           | ‘(’ <expr> ‘)’
+<number> ::= <digit>+ ‘.’? <digit>* ((‘E’ | ‘e’) (‘+’ | ‘-’)? <digit>+)?
+<digit>  ::= ‘0’ | ‘1’ | ‘2’ | ‘3’ | ‘4’ | ‘5’ | ‘6’ | ‘7’ | ‘8’ | ‘9’
+```
 
 ### Descrição geral do código fonte
 O código fonte está estruturado da seguinte maneira:
 
-![Code structure](https://raw.githubusercontent.com/HaraHeique/LFA-MEL-parser/master/images/Estrutura%20do%20src.png)
+```
+source
+  |_ models
+    |_ LarkParserMEL.py
+  |_ build.py
+  |_ trab2.sh
+```
 
-##### ParserMEL.py
-É um módulo que contém uma classe única chamada `ParserMEL`, o qual representa o parser em si que é responsável por manipular as expressões matemáticas e encontrar o seu resultado.
+##### LarkParserMEL.py
+É o módulo que contém uma classe única chamada `LarkParserMEL`, o qual representa o parser em si que é responsável por manipular as expressões matemáticas da gramática MEL.
 
 ```python
-class ParserMEL:
-    def __init__(self, inputExpr: str = None):
-        self._inputExpr: str = inputExpr if (inputExpr != None) else None
-        self._currentSymbol: str = ''
-        self._currentIndex: int = 0
-        self._expressionResult: float = self.parseExpression(self._inputExpr) if (self._inputExpr != None) else 0.0
+from lark import Lark
+
+# Constante do módulo definindo a gramática a ser utilizada utilizando a sintaxe Lark + EBNF
+_MELGRAMMAR: str = """
+    expr: term (("+" | "-") term)*
+    term: factor (("*" | "/" | "//" | "%") factor)*
+    factor: base ("^" factor)?
+    base: ("+" | "-") base | NUMBER | "(" expr ")"
+
+    %import common.SIGNED_NUMBER -> NUMBER
+    %import common.WS_INLINE
+    %ignore WS_INLINE
+"""
+
+class LarkParserMEL:
+    def __init__(self):
+        self._inputExpr: str = ""
+        self._parser: Lark = Lark(_MELGRAMMAR, start='expr')
 
     @property
     def expression(self) -> str:
         return self._inputExpr
 
-    @property
-    def result(self) -> float:
-        return self._expressionResult
+    def checkExpression(self, inputExpr: str) -> bool:
+        '''Checa se a expressão de entrada é válida de acordo com a gramática MEL definida'''
+        
+        self._inputExpr = inputExpr
 
-    # Faz o parse da expressão passada como argumento
-    def parseExpression(self, inputExpr: str) -> float:
-        self.__filterInputExpression(inputExpr)
-        self.__resetSymbol()
-        self.__nextSymbol()
-        self._expressionResult = self.__expr()
-
-        # o currentSymbol não ficou no valor final que seria None, logo lança uma exceção
-        if (self._currentSymbol != None):
-            raise Exception("Something wrong happened. This is not a valid input expression.")
-
-        return self._expressionResult
+        # Usa a instancia do parser e cria a sua árvore parser de execução
+        isValidExpr: bool = True
+        try:
+            self._parser.parse(inputExpr)
+        except Exception:
+            isValidExpr = False
+        finally:
+            return isValidExpr
 ```
-A parte do código acima contém o construtor da classe que contém a expressão de entrada(inputExpr), o símbolo corrente que está sendo lido(currentSymbol), a posição corrente(currentIndex) em que se encontra o símbolo e por fim o valor da expressão dada como entrada(expressionResult).
-
-O trecho também mostra o único método público que a classe possui chamada `parseExpression`, o qual é chamado passando uma expressão matemática de entrada e resolvendo até achar um valor que é retornado ou ignorar a expressão por ela ser inválida.
-Com a chamada desse método será invocada todas as outras funções da classe seguindo as regras de produção definidas para a gramática que é mostrada logo abaixo.
-
-<p align="center">
-  <img src="https://github.com/HaraHeique/LFA-MEL-parser/blob/master/images/Regra%20de%20produ%C3%A7%C3%A3o%20da%20gram%C3%A1tica%20MEL.png?raw=true">
-</p>
+O trecho código acima representa cerca de 90% do código do módulo, onde quando um objeto `LarkParserMEL` é instanciado também é instanciado um objeto da classe `Lark` proveniente da biblioteca importada. No construtor dessa classe é passada a gramática definida com suas regras de produção além de qual é sua regra/não-terminal inicial. Com isso é possível chamar o método `parse(expression)` capaz de criar uma tree parse caso a expressão passada como argumento seja válida, onde é utilizada na chamada do método `checkExpression`.
 
 ##### build.py
-É o módulo que é buildado e que contém a execução principal do programa, o qual utiliza o módulo `ParserMEL.py` que contém a classe do parser e instancia um objeto fazendo chamada o método `parseExpression` passando como argumento a expressão e recebendo um valor como resultado. Como se pode notar no trecho abaixo a expressão é digitada pelo usuário.
+É o módulo que é buildado e que contém a execução principal do programa. Nele é utilizada a instancia do objeto da classe `LarkParserMEL`. Basicamente o usuário fornece a expressão matemática desejada e o programa retorna se a expressão digitada é válida ou inválida.
 
 ```python
-from models.ParserMEL import ParserMEL
+from models.LarkParserMEL import LarkParserMEL
 
 def main():
-    parserMEL: ParserMEL = ParserMEL()
+    parserMEL: LarkParserMEL = LarkParserMEL()
 
     while True:
-        try:
-            inputExpression: str = input("Enter your math expression: ")
-            parserMEL.parseExpression(inputExpression)
-            print("Expression result: {0} = {1}".format(parserMEL.expression, parserMEL.result))
-        except Exception:
-            print("Invalid input expression. Please check your expression and try again.")
-        finally:
-            # Somente para pular uma linha no terminal xD
-            print()
+        inputExpression: str = input("\nEnter your math expression: ")
+        isValidExpr: bool = parserMEL.checkExpression(inputExpression)
+        strIsValidExpr: str = "valid" if isValidExpr else "invalid"
+        
+        print("Expression {0} is {1}.".format(inputExpression, strIsValidExpr))
 
     return 0
 
@@ -81,13 +111,15 @@ if __name__ == '__main__' :
 ### Como executar?
 Para buildar/executar o app no ambiente Linux basta abrir o CLI(Command Line Interface) no diretório __/source__ e digitar o seguinte comando:
     
-    python3 build.py
+    sh trab2.sh
 
-Neste comando como o SO é o Linux dist. Ubuntu 18.04 e já contém as versões ***2.7.15 e 3.6.7*** como default, o que torna fácil a execução de código utilizando esta linguagem. O outro comando seria a execução do arquivo .sh criado no mesmo diretório. Abaixo execute o mesmo comando que produzirá a mesma ação do primeiro comando mostrado acima:
+Outro comando que também pode ser usado é o seguinte:
 
-    sh trab1.sh
+    ./trab2.sh
+
+__OBS.:__ *Geralmente a primeira execução do programa demora um pouco mais pois necessita atualizar o gerenciador de pacotes para checar dependências e fazer o download, caso necessário, do pip (gerenciador de pacotes do Python) assim como a biblioteca Lark que necessita do pip para ser instalada.*
     
 ### Informações adicionais
-Todo o código fonte está hospedado no meu [GitHub](https://github.com/HaraHeique/LFA-MEL-parser).
+Todo o código fonte está hospedado no [GitHub](https://github.com/HaraHeique/LFA-MEL-larkParser).
 
 
