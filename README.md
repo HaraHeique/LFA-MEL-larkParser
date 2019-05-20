@@ -1,5 +1,5 @@
-# LFA-MEL-parser com Lark lib
-Implementação de um parser descendente recursivo para uma Linguagem Livre de Contexto, chamada de MEL utilizando a ferramenta voltada para o parse de qualquer gramática livre de contexto chamada **Lark**.
+# LFA-MEL-parser com a biblioteca Lark
+Implementação de um parser descendente recursivo para uma Linguagem Livre de Contexto, chamada de MEL utilizando a ferramenta voltada para o parse de qualquer gramática livre de contexto chamada [**Lark**](https://github.com/lark-parser/lark).
 
 ### Informações gerais
 - **Autor**: Harã Heique dos Santos
