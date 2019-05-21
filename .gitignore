@@ -3,4 +3,4 @@
 *.pyo
 __pycache__/
 .vscode/
-venv/
+/venv/*
