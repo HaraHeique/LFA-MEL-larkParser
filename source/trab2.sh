@@ -1,4 +1,7 @@
 sudo apt-get update
 sudo apt install python3-pip
-pip3 install lark-parser
+sudo pip3 install virtualenv
+virtualenv venv --python=python3
+source venv/bin/activate
+pip install lark-parser
 python3 build.py
